@@ -32,7 +32,7 @@ async function processMessage(message) {
 
       // Vérifie si le message est issu de /eco server-leaderboard ou contient un classement
       const isLeaderboard =
-        commandName.includes('eco') ||
+        commandName.includes('leaderboard') ||
         embed?.title?.toLowerCase().includes('leaderboard') ||
         embed?.title?.toLowerCase().includes('classement') ||
         embed?.description?.toLowerCase().includes('leaderboard') ||
