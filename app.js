@@ -23,9 +23,14 @@ client.on('messageCreate', async (message) => {
   if (message.author.id === PHOENIX_BOT_ID || message.author.id === client.user.id) {
     const isLeaderboard = message.embeds[0]?.title?.toLowerCase().includes('server-leaderboard');
     if(!isLeaderboard) {
+      try {
+        await message.delete();
+        }  catch(err) {
+          console.error('Erreur de suppresion',err);
+        }
+      }
       return;
     }
-  }
 
   // Suppression automatique de tout autre message envoyé
   try {
