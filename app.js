@@ -16,25 +16,31 @@ client.once('ready', () => {
   console.log(`Bot connecté en tant que ${client.user.tag}`);
 });
 
-client.on('messageCreate', async (message) => {
+async function processMessage(message) {
   if (message.channelId !== CLASSEMENT_CHANNEL_ID) return;
-  if (message.author.id === client.user.id) return;
+  if (message.author?.id === client.user.id) return;
 
-  // Attente de 1,5s pour laisser le temps à Discord d'attacher l'embed
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+  // Pause de 1 seconde pour laisser à Discord le temps d'attacher l'embed
+  await new Promise((resolve) => setTimeout(resolve, 1000));
 
   try {
-    // Récupération des données à jour du message
     const freshMessage = await message.channel.messages.fetch(message.id);
 
     if (freshMessage.author.id === PHOENIX_BOT_ID) {
-      const hasEmbed = freshMessage.embeds.length > 0;
-      const hasContent = freshMessage.content.trim().length > 0;
+      const embed = freshMessage.embeds[0];
+      const commandName = freshMessage.interactionMetadata?.name || freshMessage.interaction?.commandName || '';
 
-      if (hasEmbed || hasContent) {
-        console.log('✅ Classement de PhoenixBot détecté et conservé.');
+      // Vérifie si le message est issu de /eco server-leaderboard ou contient un classement
+      const isLeaderboard =
+        commandName.includes('eco') ||
+        embed?.title?.toLowerCase().includes('leaderboard') ||
+        embed?.title?.toLowerCase().includes('classement') ||
+        embed?.description?.toLowerCase().includes('leaderboard') ||
+        freshMessage.content.toLowerCase().includes('classement') ||
+        freshMessage.embeds.length > 0;
 
-        // Supprime les anciens messages du salon
+      if (isLeaderboard) {
+        // Conserve le message et purge les anciens messages du salon
         const history = await freshMessage.channel.messages.fetch({ limit: 20 });
         const oldMessages = history.filter((msg) => msg.id !== freshMessage.id);
         if (oldMessages.size > 0) {
@@ -44,12 +50,17 @@ client.on('messageCreate', async (message) => {
       }
     }
 
-    // Suppression de tout autre message non conforme
+    // Supprime tout autre message (ex: texte membre ou réponse d'une autre commande)
     await freshMessage.delete();
-    console.log('🗑️ Message non autorisé supprimé.');
   } catch (err) {
-    // Le message a déjà pu être effacé
+    // Le message a pu être déjà supprimé
   }
+}
+
+// Écoute de la création ET de la mise à jour des messages
+client.on('messageCreate', processMessage);
+client.on('messageUpdate', async (_, newMessage) => {
+  processMessage(newMessage);
 });
 
 client.login(process.env.DISCORD_TOKEN);
