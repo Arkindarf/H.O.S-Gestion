@@ -21,7 +21,10 @@ client.on('messageCreate', async (message) => {
 
   // On conserve uniquement les messages de PhoenixBot et du bot lui-même
   if (message.author.id === PHOENIX_BOT_ID || message.author.id === client.user.id) {
-    return;
+    const isLeaderboard = message.embeds[0]?.title?.toLowerCase().includes('server-leaderboard');
+    if(!isLeaderboard) {
+      return;
+    }
   }
 
   // Suppression automatique de tout autre message envoyé
