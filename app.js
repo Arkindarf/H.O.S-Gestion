@@ -20,39 +20,35 @@ client.on('messageCreate', async (message) => {
   if (message.channelId !== CLASSEMENT_CHANNEL_ID) return;
   if (message.author.id === client.user.id) return;
 
-  // Si le message vient de PhoenixBot
-  if (message.author.id === PHOENIX_BOT_ID) {
-    const textContent = message.content.toLowerCase();
-    const embedText = message.embeds[0]?.title?.toLowerCase() || message.embeds[0]?.description?.toLowerCase() || '';
+  // Attente de 1,5s pour laisser le temps à Discord d'attacher l'embed
+  await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // Détecte si le message contient du texte ou un embed en rapport avec le classement
-    const isLeaderboard = 
-      textContent.includes('leaderboard') || 
-      textContent.includes('classement') ||
-      embedText.includes('leaderboard') || 
-      embedText.includes('classement') ||
-      message.embeds.length > 0; // Si PhoenixBot envoie n'importe quel embed, on le conserve
-
-    if (isLeaderboard) {
-      // Supprime les anciens messages pour garder uniquement ce nouveau classement
-      try {
-        const history = await message.channel.messages.fetch({ limit: 20 });
-        const oldMessages = history.filter((msg) => msg.id !== message.id);
-        if (oldMessages.size > 0) {
-          await message.channel.bulkDelete(oldMessages, true);
-        }
-      } catch (err) {
-        console.error('Erreur lors du nettoyage :', err);
-      }
-      return;
-    }
-  }
-
-  // Tout autre message est supprimé
   try {
-    await message.delete();
+    // Récupération des données à jour du message
+    const freshMessage = await message.channel.messages.fetch(message.id);
+
+    if (freshMessage.author.id === PHOENIX_BOT_ID) {
+      const hasEmbed = freshMessage.embeds.length > 0;
+      const hasContent = freshMessage.content.trim().length > 0;
+
+      if (hasEmbed || hasContent) {
+        console.log('✅ Classement de PhoenixBot détecté et conservé.');
+
+        // Supprime les anciens messages du salon
+        const history = await freshMessage.channel.messages.fetch({ limit: 20 });
+        const oldMessages = history.filter((msg) => msg.id !== freshMessage.id);
+        if (oldMessages.size > 0) {
+          await freshMessage.channel.bulkDelete(oldMessages, true);
+        }
+        return;
+      }
+    }
+
+    // Suppression de tout autre message non conforme
+    await freshMessage.delete();
+    console.log('🗑️ Message non autorisé supprimé.');
   } catch (err) {
-    console.error('Erreur lors de la suppression :', err);
+    // Le message a déjà pu être effacé
   }
 });
 
