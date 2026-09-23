@@ -9,8 +9,8 @@ const client = new Client({
   ],
 });
 
-const CLASSEMENT_CHANNEL_ID = 'ID_DE_TON_SALON_CLASSEMENT';
-const PHOENIX_BOT_ID = 'ID_DU_BOT_PHOENIX';
+const CLASSEMENT_CHANNEL_ID = '1552042941575331932';
+const PHOENIX_BOT_ID = '1230149118710779914';
 
 client.once('ready', () => {
   console.log(`Bot connecté en tant que ${client.user.tag}`);
