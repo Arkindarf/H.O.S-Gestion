@@ -20,15 +20,40 @@ client.on('messageCreate', async (message) => {
   if (message.channelId !== CLASSEMENT_CHANNEL_ID) return;
   if (message.author.id === client.user.id) return;
 
+  // Si le message vient de PhoenixBot
   if (message.author.id === PHOENIX_BOT_ID) {
-    console.log('--- Message reçu de PhoenixBot ---');
-    console.log('Contenu :', message.content);
-    console.log('Nombre d\'embeds :', message.embeds.length);
-    if (message.embeds.length > 0) {
-      console.log('Titre de l\'embed :', message.embeds[0].title);
-      console.log('Description :', message.embeds[0].description);
+    const textContent = message.content.toLowerCase();
+    const embedText = message.embeds[0]?.title?.toLowerCase() || message.embeds[0]?.description?.toLowerCase() || '';
+
+    // Détecte si le message contient du texte ou un embed en rapport avec le classement
+    const isLeaderboard = 
+      textContent.includes('leaderboard') || 
+      textContent.includes('classement') ||
+      embedText.includes('leaderboard') || 
+      embedText.includes('classement') ||
+      message.embeds.length > 0; // Si PhoenixBot envoie n'importe quel embed, on le conserve
+
+    if (isLeaderboard) {
+      // Supprime les anciens messages pour garder uniquement ce nouveau classement
+      try {
+        const history = await message.channel.messages.fetch({ limit: 20 });
+        const oldMessages = history.filter((msg) => msg.id !== message.id);
+        if (oldMessages.size > 0) {
+          await message.channel.bulkDelete(oldMessages, true);
+        }
+      } catch (err) {
+        console.error('Erreur lors du nettoyage :', err);
+      }
+      return;
     }
   }
-});;
+
+  // Tout autre message est supprimé
+  try {
+    await message.delete();
+  } catch (err) {
+    console.error('Erreur lors de la suppression :', err);
+  }
+});
 
 client.login(process.env.DISCORD_TOKEN);
