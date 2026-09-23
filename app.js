@@ -1,81 +1,35 @@
 import 'dotenv/config';
-import express from 'express';
-import {
-  ButtonStyleTypes,
-  InteractionResponseFlags,
-  InteractionResponseType,
-  InteractionType,
-  MessageComponentTypes,
-  verifyKeyMiddleware,
-} from 'discord-interactions';
+import { Client, GatewayIntentBits } from 'discord.js';
 
-// Create an express app
-const app = express();
-// Get port, or default to 3000
-const PORT = process.env.PORT || 3000;
-// To keep track of our active games
-
-/**
- * Interactions endpoint URL where Discord will send HTTP requests
- * Parse request body and verifies incoming requests using discord-interactions package
- */
-app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async function (req, res) {
-  // Interaction id, type and data
-  const { id, type, data } = req.body;
-
-  /**
-   * Handle verification requests
-   */
-  if (type === InteractionType.PING) {
-    return res.send({ type: InteractionResponseType.PONG });
-  }
-
-  /**
-   * Handle slash command requests
-   * See https://discord.com/developers/docs/interactions/application-commands#slash-commands
-   */
-  if (type === InteractionType.APPLICATION_COMMAND) {
-    const { name } = data;
-
-    // "test" command
-    if (name === 'test') {
-      // Send a message into the channel where command was triggered from
-      return res.send({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          flags: InteractionResponseFlags.IS_COMPONENTS_V2,
-          components: [
-            {
-              type: MessageComponentTypes.TEXT_DISPLAY,
-              // Fetches a random emoji to send from a helper function
-              content: `hello world`
-            }
-          ]
-        },
-      });
-    }
-    if (name === 'special') {
-      return res.send({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-        data: {
-          flags: InteractionResponseFlags.IS_COMPONENTS_V2,
-          components: [
-            {
-              type: MessageComponentTypes.TEXT_DISPLAY,
-              content:"Vive la Révolution !"
-            }
-          ]
-        },
-      });
-    }
-    console.error(`unknown command: ${name}`);
-    return res.status(400).json({ error: 'unknown command' });
-  }
-
-  console.error('unknown interaction type', type);
-  return res.status(400).json({ error: 'unknown interaction type' });
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+  ],
 });
 
-app.listen(PORT, () => {
-  console.log('Listening on port', PORT);
+const CLASSEMENT_CHANNEL_ID = 'ID_DE_TON_SALON_CLASSEMENT';
+const PHOENIX_BOT_ID = 'ID_DU_BOT_PHOENIX';
+
+client.once('ready', () => {
+  console.log(`Bot connecté en tant que ${client.user.tag}`);
 });
+
+client.on('messageCreate', async (message) => {
+  if (message.channelId !== CLASSEMENT_CHANNEL_ID) return;
+
+  // On conserve uniquement les messages de PhoenixBot et du bot lui-même
+  if (message.author.id === PHOENIX_BOT_ID || message.author.id === client.user.id) {
+    return;
+  }
+
+  // Suppression automatique de tout autre message envoyé
+  try {
+    await message.delete();
+  } catch (error) {
+    console.error('Erreur lors de la suppression :', error);
+  }
+});
+
+client.login(process.env.DISCORD_TOKEN);
