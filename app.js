@@ -21,7 +21,7 @@ client.on('messageCreate', async (message) => {
 
   // On conserve uniquement les messages de PhoenixBot et du bot lui-même
   if (message.author.id === PHOENIX_BOT_ID || message.author.id === client.user.id) {
-    const isLeaderboard = message.embeds[1]?.title?.toLowerCase().includes('leaderboard');
+    const isLeaderboard = message.embeds[0]?.title?.toLowerCase().includes('leaderboard');
     if(!isLeaderboard) {
       try {
         await message.delete();
