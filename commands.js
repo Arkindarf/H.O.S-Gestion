@@ -18,6 +18,6 @@ const SPECIAL_COMMAND = {
   contexts: [0, 1, 2],
 };
 
-const ALL_COMMANDS = [TEST_COMMAND, SPECIAL_COMMAND];
+const ALL_COMMANDS = [];
 
 InstallGlobalCommands(process.env.APP_ID, ALL_COMMANDS);
