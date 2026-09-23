@@ -48,6 +48,8 @@ const SPECIAL_COMMAND = {
   name: 'special',
   description: 'Elle arrivera',
   type: 1,
+  integration_types: [0, 1],
+  contexts: [0, 1, 2],
 };
 
 const ALL_COMMANDS = [TEST_COMMAND, CHALLENGE_COMMAND, SPECIAL_COMMAND];
